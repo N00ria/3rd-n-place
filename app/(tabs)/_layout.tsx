@@ -1,35 +1,95 @@
+import React, { useState } from 'react';
 import { Tabs } from 'expo-router';
-import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import AddSpaceModal from '../../components/AddSpaceModal';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const [modalVisible, setModalVisible] = useState(false);
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
+    <>
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: '#2D60FF',
+          tabBarStyle: styles.tabBar,
+          tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
+        }}
+      >
+        {/* LEFT TAB: DISCOVER */}
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Discover',
+            tabBarIcon: ({ color }) => <Ionicons name="search" size={24} color={color} />,
+            headerShown: false,
+          }}
+        />
+
+        {/* CENTER TAB: THE PLUS BUTTON */}
+       <Tabs.Screen
+        name="add-placeholder" // <--- MUST MATCH THE FILENAME ABOVE
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+            setModalVisible(true);
+          },
+        }}
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: '', 
+          tabBarIcon: () => (
+            <View style={styles.plusButton}>
+              <Ionicons name="add" size={32} color="white" />
+            </View>
+          ),
         }}
       />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
+
+        {/* RIGHT TAB: PROFILE */}
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={24} color={color} />,
+            headerShown: false,
+          }}
+        />
+      </Tabs>
+
+      {/* MODAL COMPONENT */}
+      <AddSpaceModal 
+        isVisible={modalVisible} 
+        onClose={() => setModalVisible(false)} 
       />
-    </Tabs>
+    </>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    backgroundColor: '#FFFFFF',
+    height: 70,
+    borderTopWidth: 0,
+    // This is the secret sauce: 
+    // It prevents the tab bar from cutting off the floating button
+    overflow: 'visible', 
+    position: 'absolute',
+  },
+  plusButton: {
+    backgroundColor: '#2D60FF',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // Position it so it sits halfway above the bar
+    top: -20, 
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+    shadowColor: '#2D60FF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+});
