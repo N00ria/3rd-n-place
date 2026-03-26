@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { doc, setDoc } from 'firebase/firestore';
 import { 
   Modal, View, Text, TextInput, StyleSheet, 
   TouchableOpacity, ScrollView, SafeAreaView, Image, ActivityIndicator, Alert, Platform 
@@ -67,8 +68,10 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
     }
   };
 
+  
   // --- LOGIC: SUBMIT TO FIREBASE ---
   const handleCreateSpace = async () => {
+      console.log("Create button pressed");
     if (!formData.name || !image || !formData.category) {
       Alert.alert("Required Fields", "Please provide at least a name, category, and a photo.");
       return;
@@ -81,24 +84,28 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
 
       // 1. Upload to Firebase Storage
       if (image) {
-        const response = await fetch(image);
-        const blob = await response.blob();
-        const storageRef = ref(storage, `space_covers/${Date.now()}-${formData.name.replace(/\s/g, '')}`);
-        
-        const snapshot = await uploadBytes(storageRef, blob);
-        finalImageUrl = await getDownloadURL(snapshot.ref);
-      }
+      const response = await fetch(image);
+      const blob = await response.blob();
+      finalImageUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
 
       // 2. Add Document to Firestore
-      await addDoc(collection(db, 'spaces'), {
+      const newSpaceRef = doc(collection(db, 'spaces'));
+
+      // Save the doc
+      await setDoc(newSpaceRef, {
         ...formData,
         tags: selectedTags,
         imageUrl: finalImageUrl,
         createdAt: serverTimestamp(),
-        // Defaulting to Ann Arbor center for now
         latitude: 42.2781,
         longitude: -83.7382,
-        rating: 5.0, // New spaces start fresh!
+        rating: 5.0,
       });
 
       setLoading(false);

@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+
+
 import { 
   FlatList, 
   StyleSheet, 
@@ -35,20 +37,30 @@ export default function DiscoverScreen() {
   // 1. REAL-TIME FIREBASE FETCH
   useEffect(() => {
     // We order by 'createdAt' so newest spaces show up at the top
-    const q = query(collection(db, 'spaces'), orderBy('createdAt', 'desc'));
+    const q = query(
+      collection(db, 'spaces'),
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const spacesData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+
+      // Sort newest first
+      spacesData.sort((a, b) => {
+        const aTime = a.createdAt?.toMillis?.() || 0;
+        const bTime = b.createdAt?.toMillis?.() || 0;
+        return bTime - aTime;
+      });
+
       setAllSpaces(spacesData);
       setLoading(false);
     }, (error) => {
       console.error("Firestore Error:", error);
       setLoading(false);
     });
-
+    
     return () => unsubscribe(); // Cleanup listener on unmount
   }, []);
 
