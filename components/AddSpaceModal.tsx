@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { doc, setDoc } from 'firebase/firestore';
 import { 
   Modal, View, Text, TextInput, StyleSheet, 
   TouchableOpacity, ScrollView, SafeAreaView, Image, ActivityIndicator, Alert, Platform 
@@ -8,18 +7,11 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
 // Firebase Imports
-import { db, storage } from '../firebaseConfig'; 
+import { db, storage, auth } from '../firebaseConfig'; // Added auth
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-const ACCESSIBILITY_TAGS = [
-  { id: 'quiet', label: 'Quiet Zone', icon: 'volume-mute-outline' },
-  { id: 'wheelchair', label: 'Wheelchair Accessible', icon: 'body-outline' },
-  { id: 'lighting', label: 'Dim Lighting', icon: 'sunny-outline' },
-  { id: 'outlets', label: 'Power Outlets', icon: 'battery-charging-outline' },
-  { id: 'gender', label: 'Gender Neutral Restrooms', icon: 'transgender-outline' },
-  { id: 'sensory', label: 'Sensory Friendly', icon: 'eye-outline' },
-];
+import { ACCESSIBILITY_TAGS } from '@/constants/tags';
 
 interface AddSpaceModalProps {
   isVisible: boolean;
@@ -27,7 +19,6 @@ interface AddSpaceModalProps {
 }
 
 export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps) {
-  // --- STATE ---
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -39,20 +30,16 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
     description: ''
   });
 
-  // --- LOGIC: TOGGLE TAGS ---
   const toggleTag = (tagId: string) => {
-    if (selectedTags.includes(tagId)) {
-      setSelectedTags(selectedTags.filter(id => id !== tagId));
-    } else {
-      setSelectedTags([...selectedTags, tagId]);
-    }
+    setSelectedTags(prev => 
+      prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
+    );
   };
 
-  // --- LOGIC: PICK IMAGE ---
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'We need photo gallery access to upload a cover image.');
+      Alert.alert('Permission Denied', 'Gallery access is required to upload a photo.');
       return;
     }
 
@@ -60,7 +47,7 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [16, 9],
-      quality: 0.7,
+      quality: 0.6, // Compressed for faster uploads
     });
 
     if (!result.canceled) {
@@ -68,12 +55,16 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
     }
   };
 
-  
-  // --- LOGIC: SUBMIT TO FIREBASE ---
   const handleCreateSpace = async () => {
-      console.log("Create button pressed");
+    const user = auth.currentUser;
+
+    if (!user) {
+      Alert.alert("Auth Error", "You must be signed in to add a space.");
+      return;
+    }
+
     if (!formData.name || !image || !formData.category) {
-      Alert.alert("Required Fields", "Please provide at least a name, category, and a photo.");
+      Alert.alert("Missing Info", "Please provide a name, category, and a photo.");
       return;
     }
 
@@ -82,50 +73,48 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
     try {
       let finalImageUrl = '';
 
-      // 1. Upload to Firebase Storage
-      if (image) {
+      // 1. Upload Image to Firebase Storage (The Professional Way)
       const response = await fetch(image);
       const blob = await response.blob();
-      finalImageUrl = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    }
+      const storageRef = ref(storage, `spaces/${Date.now()}-${user.uid}.jpg`);
+      
+      const uploadResult = await uploadBytes(storageRef, blob);
+      finalImageUrl = await getDownloadURL(uploadResult.ref);
 
       // 2. Add Document to Firestore
-      const newSpaceRef = doc(collection(db, 'spaces'));
-
-      // Save the doc
-      await setDoc(newSpaceRef, {
+      await addDoc(collection(db, 'spaces'), {
         ...formData,
         tags: selectedTags,
         imageUrl: finalImageUrl,
+        createdBy: user.uid, // Tie to Johnny's real UID
+        authorName: user.displayName || 'Johnny', // Handy for quick display
         createdAt: serverTimestamp(),
-        latitude: 42.2781,
+        // Default placeholders for the prototype
+        latitude: 42.2781, 
         longitude: -83.7382,
         rating: 5.0,
       });
 
       setLoading(false);
-      Alert.alert("Success!", "Your third space has been added.");
+      Alert.alert("Success!", "Johnny, your new space is live!");
       
-      // Reset Form
+      // Cleanup
       setImage(null);
       setSelectedTags([]);
       setFormData({ name: '', category: '', phone: '', website: '', description: '' });
       onClose();
 
     } catch (error) {
-      console.error(error);
+      console.error("Submission Error:", error);
       setLoading(false);
-      Alert.alert("Upload Error", "There was an issue saving your space. Check your Firebase rules.");
+      Alert.alert("Error", "Could not save space. Check your internet and Firebase rules.");
     }
   };
 
   return (
     <Modal visible={isVisible} animationType="slide" presentationStyle="fullScreen">
+      {/* ... (Keep your existing Modal/Header/Input JSX here - it's perfect) ... */}
+      {/* Ensure the submit button calls handleCreateSpace */}
       <SafeAreaView style={styles.container}>
         {/* HEADER */}
         <View style={styles.header}>

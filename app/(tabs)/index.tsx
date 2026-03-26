@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react';
-
-
 import { 
   FlatList, 
   StyleSheet, 
@@ -13,10 +11,11 @@ import {
   Platform
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 // Firebase
-import { db } from '../../firebaseConfig';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { auth, db } from '../../firebaseConfig';
+import { collection, onSnapshot, query, doc } from 'firebase/firestore';
 
 // Custom Components
 import SpaceCard from '../../components/SpaceCard';
@@ -25,6 +24,7 @@ import FilterDropdown from '../../components/FilterDropdown';
 import { getTagIcon } from '../../utils/icons';
 
 export default function DiscoverScreen() {
+  const [userData, setUserData] = useState<any>(null); // Added state for Johnny
   const [allSpaces, setAllSpaces] = useState<any[]>([]);
   const [filteredSpaces, setFilteredSpaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,14 +34,14 @@ export default function DiscoverScreen() {
   
   const router = useRouter();
 
-  // 1. REAL-TIME FIREBASE FETCH
+  // 1. DUAL LISTENER: User Profile + Spaces
   useEffect(() => {
-    // We order by 'createdAt' so newest spaces show up at the top
-    const q = query(
-      collection(db, 'spaces'),
-    );
+    let unsubUser = () => {}; // Initialize as empty function
+    let unsubSpaces = () => {};
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    // A. Listen to All Spaces (Runs regardless of login status)
+    const q = query(collection(db, 'spaces'));
+    unsubSpaces = onSnapshot(q, (snapshot) => {
       const spacesData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -49,46 +49,59 @@ export default function DiscoverScreen() {
 
       // Sort newest first
       spacesData.sort((a, b) => {
-        const aTime = a.createdAt?.toMillis?.() || 0;
-        const bTime = b.createdAt?.toMillis?.() || 0;
+        const aTime = a.createdAt?.toMillis?.() || Date.now();
+        const bTime = b.createdAt?.toMillis?.() || Date.now();
         return bTime - aTime;
       });
 
       setAllSpaces(spacesData);
       setLoading(false);
     }, (error) => {
-      console.error("Firestore Error:", error);
+      console.error("Spaces Fetch Error:", error);
       setLoading(false);
     });
-    
-    return () => unsubscribe(); // Cleanup listener on unmount
+
+    // B. Listen to Profile Data (Only if logged in)
+    const user = auth.currentUser;
+    if (user) {
+      unsubUser = onSnapshot(doc(db, 'users', user.uid), (snapshot) => {
+        if (snapshot.exists()) {
+          setUserData(snapshot.data());
+        }
+      });
+    }
+    else {
+      console.log("TEST: No USER");
+    }
+
+    // CLEANUP
+    return () => {
+      unsubUser();
+      unsubSpaces();
+    };
   }, []);
 
   // 2. THE FILTER ENGINE
   useEffect(() => {
-  let result = allSpaces;
+    let result = allSpaces;
 
-  // 1. Filter by Search Query
-  if (searchQuery.trim() !== '') {
-    result = result.filter(s => 
-      s.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }
-
-  // 2. Filter by Accessibility Tags (The Magic Part)
-  if (selectedFilters.length > 0) {
-    result = result.filter(space => {
-      // Check if EVERY selected filter ID exists in this space's tags array
-      return selectedFilters.every(filterId => 
-        space.tags && space.tags.includes(filterId)
+    if (searchQuery.trim() !== '') {
+      result = result.filter(s => 
+        s.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
-    });
-  }
+    }
 
-  setFilteredSpaces(result);
-}, [searchQuery, selectedFilters, allSpaces]);
+    if (selectedFilters.length > 0) {
+      result = result.filter(space => {
+        return selectedFilters.every(filterId => 
+          space.tags && space.tags.includes(filterId)
+        );
+      });
+    }
 
-  // Dynamic Greeting
+    setFilteredSpaces(result);
+  }, [searchQuery, selectedFilters, allSpaces]);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good Morning";
@@ -117,10 +130,12 @@ export default function DiscoverScreen() {
           <View style={styles.headerTopRow}>
             <View>
               <Text style={styles.dateText}>{formattedDate}</Text>
-              <Text style={styles.greetingText}>{getGreeting()}, Johnny</Text>
+              <Text style={styles.greetingText}>
+                {getGreeting()}, {userData?.displayName || 'Johnny'}
+              </Text>
             </View>
             <Image 
-              source={{ uri: 'https://i.pravatar.cc/150?u=johnny' }} 
+              source={{ uri: userData?.photoURL || 'https://i.pravatar.cc/150?u=johnny' }} 
               style={styles.profilePic} 
             />
           </View>
@@ -160,7 +175,7 @@ export default function DiscoverScreen() {
         renderItem={({ item }) => (
           <SpaceCard 
             name={item.name}
-            address={item.category || "General Space"} // Using category as a subtitle
+            address={item.category || "General Space"} 
             hours="Check website for hours"
             description={item.description}
             imageUrl={item.imageUrl}
@@ -170,6 +185,7 @@ export default function DiscoverScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.emptyState}>
+            <Ionicons name="search-outline" size={48} color="#CBD5E1" />
             <Text style={styles.emptyText}>No spaces match your current filters.</Text>
           </View>
         }
@@ -198,5 +214,5 @@ const styles = StyleSheet.create({
   listContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 100 },
   resultsCount: { fontSize: 18, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 15 },
   emptyState: { marginTop: 60, alignItems: 'center' },
-  emptyText: { color: '#999', fontSize: 16 },
+  emptyText: { color: '#999', fontSize: 16, marginTop: 10 },
 });
