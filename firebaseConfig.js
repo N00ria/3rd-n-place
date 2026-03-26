@@ -32,5 +32,5 @@ export const auth =
   Platform.OS === "web"
     ? getAuth(app)
     : initializeAuth(app, {
-        persistence: getReactNativePersistence(AsyncStorage),
+        persistence: getReactNativePersistence(ReactNativeAsyncStorage),
       });
