@@ -24,17 +24,25 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: '',
+    address: '',
     category: '',
     phone: '',
     website: '',
-    description: ''
+    description: '',
+    hours: ''
   });
 
   const toggleTag = (tagId: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
-    );
-  };
+    setSelectedTags((prev) => {
+        if (prev.includes(tagId)) {
+        // Remove it if it exists
+        return prev.filter((id) => id !== tagId);
+        } else {
+        // Add it if it doesn't
+        return [...prev, tagId];
+        }
+    });
+};
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -44,7 +52,7 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
     }
 
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [16, 9],
       quality: 0.6, // Compressed for faster uploads
@@ -83,16 +91,20 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
 
       // 2. Add Document to Firestore
       await addDoc(collection(db, 'spaces'), {
-        ...formData,
+        name: formData.name,
+        location: formData.address,
+        category: formData.category,
+        phone: formData.phone,
+        website: formData.website,
+        description: formData.description,
         tags: selectedTags,
         imageUrl: finalImageUrl,
-        createdBy: user.uid, // Tie to Johnny's real UID
-        authorName: user.displayName || 'Johnny', // Handy for quick display
+        createdBy: user.uid,
+        authorName: user.displayName || 'Anonymous User',
         createdAt: serverTimestamp(),
-        // Default placeholders for the prototype
-        latitude: 42.2781, 
-        longitude: -83.7382,
         rating: 5.0,
+        reviewCount: 0,
+        hours: formData.hours,
       });
 
       setLoading(false);
@@ -101,7 +113,7 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
       // Cleanup
       setImage(null);
       setSelectedTags([]);
-      setFormData({ name: '', category: '', phone: '', website: '', description: '' });
+      setFormData({ name: '', address: '', category: '', phone: '', website: '', description: '' });
       onClose();
 
     } catch (error) {
@@ -119,7 +131,7 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
         {/* HEADER */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={28} color="white" />
+            <Ionicons name="close-outline" size={32} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Add a Third Space!</Text>
         </View>
@@ -132,8 +144,8 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
               <Image source={{ uri: image }} style={styles.previewImage} />
             ) : (
               <View style={styles.placeholderContent}>
-                <Ionicons name="cloud-upload-outline" size={44} color="#2D60FF" />
-                <Text style={styles.uploadHint}>Tap to select a photo</Text>
+                <Ionicons name="image-outline" size={44} color="#2D60FF" />
+                <Text style={styles.uploadHint}>Add a photo of the space</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -147,7 +159,14 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
           />
           <TextInput 
             style={styles.input} 
-            placeholder="Category (e.g. Cafe, Library)" 
+            placeholder="Address" 
+            placeholderTextColor="#999"
+            value={formData.address}
+            onChangeText={(v) => setFormData({...formData, address: v})}
+          />
+          <TextInput 
+            style={styles.input} 
+            placeholder="Category (e.g. Park, Cafe, Coworking Space)" 
             placeholderTextColor="#999"
             value={formData.category}
             onChangeText={(v) => setFormData({...formData, category: v})}
@@ -168,8 +187,15 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
             value={formData.website}
             onChangeText={(v) => setFormData({...formData, website: v})}
           />
+          <TextInput
+            style={styles.input}
+            placeholder='Hours (e.g. "Mon-Fri: 6am-9pm)'
+            placeholderTextColor="#999"
+            value={formData.hours}
+            onChangeText={(v) => setFormData({...formData, hours: v})}
+          />
           
-          <Text style={styles.label}>Accessibility Tags</Text>
+          <Text style={styles.label}>Accessibility & Features</Text>
           <View style={styles.tagContainer}>
             {ACCESSIBILITY_TAGS.map((tag) => {
               const isSelected = selectedTags.includes(tag.id);
@@ -181,7 +207,7 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
                 >
                   <Ionicons 
                     name={tag.icon as any} 
-                    size={16} 
+                    size={14} 
                     color={isSelected ? 'white' : '#666'} 
                   />
                   <Text style={[styles.tagText, isSelected && styles.tagTextSelected]}>

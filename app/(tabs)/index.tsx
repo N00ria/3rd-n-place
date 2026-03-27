@@ -22,6 +22,7 @@ import SpaceCard from '../../components/SpaceCard';
 import SearchBar from '../../components/SearchBar';
 import FilterDropdown from '../../components/FilterDropdown';
 import { getTagIcon } from '../../utils/icons';
+import { ACCESSIBILITY_TAGS } from '@/constants/tags';
 
 export default function DiscoverScreen() {
   const [userData, setUserData] = useState<any>(null); // Added state for Johnny
@@ -134,14 +135,10 @@ export default function DiscoverScreen() {
                 {getGreeting()}, {userData?.displayName || 'Johnny'}
               </Text>
             </View>
-            <Image 
-              source={{ uri: userData?.photoURL || 'https://i.pravatar.cc/150?u=johnny' }} 
-              style={styles.profilePic} 
-            />
           </View>
           
           <View style={styles.brandContent}>
-             <Text style={styles.brandTitle}>Find Your Perfect Third Space</Text>
+             {/* <Text style={styles.brandTitle}>Find Your Perfect Third Space</Text> */}
              <Text style={styles.brandSubtitle}>Discover Welcoming Spaces with 3rd 'n Place</Text>
           </View>
         </SafeAreaView>
@@ -175,11 +172,13 @@ export default function DiscoverScreen() {
         renderItem={({ item }) => (
           <SpaceCard 
             name={item.name}
-            address={item.category || "General Space"} 
-            hours="Check website for hours"
-            description={item.description}
+            address={item.address || "Address not available"} 
+            hours={item.hours || "Check website for hours"}
             imageUrl={item.imageUrl}
-            tags={(item.tags || []).map((t: string) => ({ name: t, ...getTagIcon(t) }))}
+            tags={(item.tags || []).map((t: string) => {
+              const tagDef = ACCESSIBILITY_TAGS.find(tag => tag.id === t);
+              return { name: tagDef?.label || t, ...getTagIcon(t) };
+            })}
             onPress={() => router.push(`/space/${item.id}`)} 
           />
         )}
@@ -205,7 +204,7 @@ const styles = StyleSheet.create({
   },
   headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 },
   dateText: { color: '#A5C0FF', fontSize: 12, fontWeight: '800', letterSpacing: 1.2 },
-  greetingText: { color: '#FFFFFF', fontSize: 22, fontWeight: 'bold', marginTop: 4 },
+  greetingText: { color: '#FFFFFF', fontSize: 25, fontWeight: 'bold', marginTop: 4 },
   profilePic: { width: 44, height: 44, borderRadius: 22, borderWidth: 2, borderColor: '#FFFFFF' },
   brandContent: { marginTop: 25 },
   brandTitle: { color: '#FFFFFF', fontSize: 26, fontWeight: 'bold' },

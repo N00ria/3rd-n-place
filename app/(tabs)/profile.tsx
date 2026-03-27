@@ -141,7 +141,7 @@ export default function ProfileScreen() {
                 style={styles.input} 
                 value={editUni} 
                 onChangeText={setEditUni} 
-                placeholder="University"
+                placeholder="Bio"
               />
             </View>
           ) : (

@@ -2,15 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// CRITICAL: These IDs must match the ones in your AddSpaceModal
-const CATEGORIES = [
-  { id: 'quiet', label: 'Quiet Zone', icon: 'volume-mute-outline' },
-  { id: 'wheelchair', label: 'Wheelchair Accessible', icon: 'body-outline' },
-  { id: 'lighting', label: 'Dim Lighting', icon: 'sunny-outline' },
-  { id: 'outlets', label: 'Power Outlets', icon: 'battery-charging-outline' },
-  { id: 'gender', label: 'Gender Neutral', icon: 'transgender-outline' },
-  { id: 'sensory', label: 'Sensory Friendly', icon: 'eye-outline' },
-];
+import { ACCESSIBILITY_TAGS } from '@/constants/tags';
 
 interface FilterDropdownProps {
   selectedFilters: string[];
@@ -59,7 +51,7 @@ export default function FilterDropdown({ selectedFilters, onToggleFilter, onClea
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              {CATEGORIES.map((cat) => {
+              {ACCESSIBILITY_TAGS.map((cat) => {
                 const isSelected = selectedFilters.includes(cat.id);
                 return (
                   <TouchableOpacity 

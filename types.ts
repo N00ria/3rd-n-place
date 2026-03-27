@@ -1,31 +1,32 @@
-// types.ts
-
 export interface AccessibilityFeatures {
-  lightingLevel: number; // 1-5
-  noiseLevel: number;    // 1-5
+  lightingLevel: number;  // 1-5
+  noiseLevel: number;     // 1-5
   physicalAccess: number; // 1-5
-  sensory: number;       // 1-5
+  sensory: number;        // 1-5
 }
 
 export interface Feedback {
   id?: string;
   comment: string;
   rating: number;
-  timestamp: any; // Firestore Timestamp
+  createdAt: any;         // was 'timestamp' — now matches what the form saves
   userId: string;
+  authorName: string;     // added — saved by handleAddReview
 }
 
 export interface Space {
   id: string;
   name: string;
-  type: 'Library' | 'Cafe' | 'Park' | 'Office' | 'Gym' | 'Coworking Space'; // Add your types here
-  address: string;
-  averageRating: number;
+  category: string;       // was rigid union type 'type' — form uses free text
+  phone: string;
+  website: string;
+  description: string;
+  tags: string[];         // array of tag ids
   imageUrl: string;
-  location: {
-    latitude: number;
-    longitude: number;
-  };
+  rating: number;
+  reviewCount: number;
+  createdBy: string;      // user uid
+  authorName: string;
   createdAt: any;
-  modifiedAt: any;
+  hours?: string;
 }
