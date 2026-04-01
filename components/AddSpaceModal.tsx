@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  Modal, View, Text, TextInput, StyleSheet, 
+  Modal, View, Text, TextInput, StyleSheet, KeyboardAvoidingView,
   TouchableOpacity, ScrollView, SafeAreaView, Image, ActivityIndicator, Alert, Platform 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -138,111 +138,117 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Add a Third Space!</Text>
         </View>
+        <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
+            <Text style={styles.label}>Upload Cover Image</Text>
+            
+            <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
+              {image ? (
+                <Image source={{ uri: image }} style={styles.previewImage} />
+              ) : (
+                <View style={styles.placeholderContent}>
+                  <Ionicons name="image-outline" size={44} color="#2D60FF" />
+                  <Text style={styles.uploadHint}>Add a photo of the space</Text>
+                </View>
+              )}
+            </TouchableOpacity>
 
-        <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
-          <Text style={styles.label}>Upload Cover Image</Text>
-          
-          <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
-            {image ? (
-              <Image source={{ uri: image }} style={styles.previewImage} />
-            ) : (
-              <View style={styles.placeholderContent}>
-                <Ionicons name="image-outline" size={44} color="#2D60FF" />
-                <Text style={styles.uploadHint}>Add a photo of the space</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+            <TextInput 
+              style={styles.input} 
+              placeholder="Name of Location" 
+              placeholderTextColor="#999"
+              value={formData.name}
+              onChangeText={(v) => setFormData({...formData, name: v})}
+            />
+            <TextInput 
+              style={styles.input} 
+              placeholder="Address" 
+              placeholderTextColor="#999"
+              value={formData.address}
+              onChangeText={(v) => setFormData({...formData, address: v})}
+            />
+            <TextInput 
+              style={styles.input} 
+              placeholder="Category (e.g. Park, Cafe, Coworking Space)" 
+              placeholderTextColor="#999"
+              value={formData.category}
+              onChangeText={(v) => setFormData({...formData, category: v})}
+            />
+            <TextInput 
+              style={styles.input} 
+              placeholder="Phone Number" 
+              keyboardType="phone-pad" 
+              placeholderTextColor="#999"
+              value={formData.phone}
+              onChangeText={(v) => setFormData({...formData, phone: v})}
+            />
+            <TextInput 
+              style={styles.input} 
+              placeholder="Website URL" 
+              keyboardType="url" 
+              placeholderTextColor="#999"
+              value={formData.website}
+              onChangeText={(v) => setFormData({...formData, website: v})}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder='Hours (e.g. "Mon-Fri: 6am-9pm)'
+              placeholderTextColor="#999"
+              value={formData.hours}
+              onChangeText={(v) => setFormData({...formData, hours: v})}
+            />
+            
+            <Text style={styles.label}>Accessibility & Features</Text>
+            <View style={styles.tagContainer}>
+              {ACCESSIBILITY_TAGS.map((tag) => {
+                const isSelected = selectedTags.includes(tag.id);
+                return (
+                  <TouchableOpacity 
+                    key={tag.id} 
+                    style={[styles.tagChip, isSelected && styles.tagChipSelected]} 
+                    onPress={() => toggleTag(tag.id)}
+                  >
+                    <Ionicons 
+                      name={tag.icon as any} 
+                      size={14} 
+                      color={isSelected ? 'white' : '#666'} 
+                    />
+                    <Text style={[styles.tagText, isSelected && styles.tagTextSelected]}>
+                      {tag.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
 
-          <TextInput 
-            style={styles.input} 
-            placeholder="Name of Location" 
-            placeholderTextColor="#999"
-            value={formData.name}
-            onChangeText={(v) => setFormData({...formData, name: v})}
-          />
-          <TextInput 
-            style={styles.input} 
-            placeholder="Address" 
-            placeholderTextColor="#999"
-            value={formData.address}
-            onChangeText={(v) => setFormData({...formData, address: v})}
-          />
-          <TextInput 
-            style={styles.input} 
-            placeholder="Category (e.g. Park, Cafe, Coworking Space)" 
-            placeholderTextColor="#999"
-            value={formData.category}
-            onChangeText={(v) => setFormData({...formData, category: v})}
-          />
-          <TextInput 
-            style={styles.input} 
-            placeholder="Phone Number" 
-            keyboardType="phone-pad" 
-            placeholderTextColor="#999"
-            value={formData.phone}
-            onChangeText={(v) => setFormData({...formData, phone: v})}
-          />
-          <TextInput 
-            style={styles.input} 
-            placeholder="Website URL" 
-            keyboardType="url" 
-            placeholderTextColor="#999"
-            value={formData.website}
-            onChangeText={(v) => setFormData({...formData, website: v})}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder='Hours (e.g. "Mon-Fri: 6am-9pm)'
-            placeholderTextColor="#999"
-            value={formData.hours}
-            onChangeText={(v) => setFormData({...formData, hours: v})}
-          />
-          
-          <Text style={styles.label}>Accessibility & Features</Text>
-          <View style={styles.tagContainer}>
-            {ACCESSIBILITY_TAGS.map((tag) => {
-              const isSelected = selectedTags.includes(tag.id);
-              return (
-                <TouchableOpacity 
-                  key={tag.id} 
-                  style={[styles.tagChip, isSelected && styles.tagChipSelected]} 
-                  onPress={() => toggleTag(tag.id)}
-                >
-                  <Ionicons 
-                    name={tag.icon as any} 
-                    size={14} 
-                    color={isSelected ? 'white' : '#666'} 
-                  />
-                  <Text style={[styles.tagText, isSelected && styles.tagTextSelected]}>
-                    {tag.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+            <TextInput 
+              style={[styles.input, styles.textArea]} 
+              placeholder="Description (What makes this space great?)" 
+              placeholderTextColor="#999"
+              multiline 
+              numberOfLines={4} 
+              value={formData.description}
+              onChangeText={(v) => setFormData({...formData, description: v})}
+              returnKeyType="done"
+              blurOnSubmit={true}
+            />
 
-          <TextInput 
-            style={[styles.input, styles.textArea]} 
-            placeholder="Description (What makes this space great?)" 
-            placeholderTextColor="#999"
-            multiline 
-            numberOfLines={4} 
-            value={formData.description}
-            onChangeText={(v) => setFormData({...formData, description: v})}
-          />
-
-          <TouchableOpacity 
-            style={[styles.submitButton, loading && { opacity: 0.6 }]} 
-            onPress={handleCreateSpace}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={styles.submitButtonText}>Create Your Space</Text>
-            )}
-          </TouchableOpacity>
-        </ScrollView>
+            <TouchableOpacity 
+              style={[styles.submitButton, loading && { opacity: 0.6 }]} 
+              onPress={handleCreateSpace}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.submitButtonText}>Create Your Space</Text>
+              )}
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
   );
