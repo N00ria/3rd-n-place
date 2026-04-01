@@ -111,7 +111,7 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
       });
 
       setLoading(false);
-      Alert.alert("Success!", "Johnny, your new space is live!");
+      Alert.alert("Success!", user.displayName , "your new space is live!");
       
       // Cleanup
       setImage(null);
