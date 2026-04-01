@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Modal, View, Text, TextInput, StyleSheet, KeyboardAvoidingView,
   TouchableOpacity, ScrollView, SafeAreaView, Image, ActivityIndicator, Alert, Platform 
@@ -19,6 +19,9 @@ interface AddSpaceModalProps {
 }
 
 export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps) {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const descriptionInputRef = useRef<TextInput>(null);
+
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -42,7 +45,7 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
         return [...prev, tagId];
         }
     });
-};
+  };
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -61,6 +64,12 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
     if (!result.canceled) {
       setImage(result.assets[0].uri);
     }
+  };
+
+  const handleDescriptionFocus = () => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100); // Small delay lets the keyboard finish appearing
   };
 
   const handleCreateSpace = async () => {
@@ -142,7 +151,11 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
+          <ScrollView 
+            ref={scrollViewRef}
+            contentContainerStyle={styles.form}
+            keyboardShouldPersistTaps="handled"
+          >
             <Text style={styles.label}>Upload Cover Image</Text>
             
             <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
@@ -234,6 +247,7 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
               onChangeText={(v) => setFormData({...formData, description: v})}
               returnKeyType="done"
               blurOnSubmit={true}
+              onFocus={handleDescriptionFocus}
             />
 
             <TouchableOpacity 
