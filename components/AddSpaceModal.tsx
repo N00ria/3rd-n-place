@@ -83,11 +83,14 @@ export default function AddSpaceModal({ isVisible, onClose }: AddSpaceModalProps
 
       // 1. Upload Image to Firebase Storage (The Professional Way)
       const response = await fetch(image);
-      const blob = await response.blob();
-      const storageRef = ref(storage, `spaces/${Date.now()}-${user.uid}.jpg`);
+        const blob = await response.blob();
+        finalImageUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+      });
       
-      const uploadResult = await uploadBytes(storageRef, blob);
-      finalImageUrl = await getDownloadURL(uploadResult.ref);
 
       // 2. Add Document to Firestore
       await addDoc(collection(db, 'spaces'), {
