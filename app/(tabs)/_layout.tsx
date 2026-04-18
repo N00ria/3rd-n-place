@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react'; // Added useEffect and useState
+import React, { useEffect, useState } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, TouchableOpacity, View, Platform } from 'react-native';
 
 // Firebase
-import { auth, db } from '../../firebaseConfig'; // Ensure this path is correct
+import { auth, db } from '../../firebaseConfig'; 
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -17,9 +17,7 @@ export default function TabLayout() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        console.log("Auth detected user:", user.uid);
         const userRef = doc(db, 'users', user.uid);
-        
         try {
           const userSnap = await getDoc(userRef);
           if (!userSnap.exists()) {
@@ -32,14 +30,12 @@ export default function TabLayout() {
               isStudent: true,
               university: "University of Michigan"
             });
-            console.log("Successfully created Firestore profile!");
           }
         } catch (error) {
           console.error("Error syncing user:", error);
         }
       }
     });
-
     return unsubscribe;
   }, []);
 
@@ -50,10 +46,9 @@ export default function TabLayout() {
         tabBarInactiveTintColor: '#94A3B8',
         tabBarStyle: styles.tabBar,
         tabBarShowLabel: true,
-        
       }}>
         
-        {/* 1. DISCOVER TAB */}
+        {/* 1. DISCOVER */}
         <Tabs.Screen
           name="index"
           options={{
@@ -63,9 +58,9 @@ export default function TabLayout() {
           }}
         />
 
-        {/* 2. THE FLOATING ADD BUTTON (Middle) */}
+        {/* 2. THE FLOATING ADD BUTTON */}
         <Tabs.Screen
-          name="add-placeholder" // This is a dummy tab
+          name="add-placeholder" 
           options={{
             title: '',
             tabBarButton: (props) => (
@@ -81,7 +76,17 @@ export default function TabLayout() {
           }}
         />
 
-        {/* 3. PROFILE TAB */}
+        {/* 3. FORUM TAB (Newly Added) */}
+        <Tabs.Screen
+          name="forum"
+          options={{
+            title: 'Forum',
+            headerShown: false,
+            tabBarIcon: ({ color }) => <Ionicons name="chatbubbles" size={26} color={color} />,
+          }}
+        />
+
+        {/* 4. PROFILE TAB (Moved to the end) */}
         <Tabs.Screen
           name="profile"
           options={{
@@ -92,7 +97,6 @@ export default function TabLayout() {
         />
       </Tabs>
 
-      {/* THE MODAL */}
       <AddSpaceModal 
         isVisible={isModalVisible} 
         onClose={() => setIsModalVisible(false)} 
@@ -104,19 +108,21 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: '#FFFFFF',
+    // Position absolute is key for the "floating" plus button
     height: Platform.OS === 'ios' ? 88 : 70,
     borderTopWidth: 0,
-    elevation: 10,
+    elevation: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
-    position: 'absolute', // Allows the plus button to "float" over the screen
+    position: 'absolute', 
   },
   plusButtonContainer: {
-    top: -20, // Halfway above the bar
+    top: -20, 
     justifyContent: 'center',
     alignItems: 'center',
+    width: 70, // Added width to ensure touch target is solid
   },
   plusButton: {
     backgroundColor: '#2D60FF',
