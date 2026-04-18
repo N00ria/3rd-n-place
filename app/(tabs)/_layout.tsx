@@ -1,14 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, TouchableOpacity, View, Platform } from 'react-native';
+import { Tabs } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 
-// Firebase
-import { auth, db } from '../../firebaseConfig'; 
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { auth, db } from '../../firebaseConfig';
 
-// Components
 import AddSpaceModal from '../../components/AddSpaceModal';
 
 export default function TabLayout() {
@@ -47,7 +45,6 @@ export default function TabLayout() {
         tabBarStyle: styles.tabBar,
         tabBarShowLabel: true,
       }}>
-        
         {/* 1. DISCOVER */}
         <Tabs.Screen
           name="index"
@@ -58,12 +55,22 @@ export default function TabLayout() {
           }}
         />
 
-        {/* 2. THE FLOATING ADD BUTTON */}
+        {/* 2. MAP */}
         <Tabs.Screen
-          name="add-placeholder" 
+          name="map"
+          options={{
+            title: 'Map',
+            headerShown: false,
+            tabBarIcon: ({ color }) => <Ionicons name="map" size={26} color={color} />,
+          }}
+        />
+
+        {/* 3. THE FLOATING ADD BUTTON */}
+        <Tabs.Screen
+          name="add-placeholder"
           options={{
             title: '',
-            tabBarButton: (props) => (
+            tabBarButton: () => (
               <TouchableOpacity 
                 style={styles.plusButtonContainer} 
                 onPress={() => setIsModalVisible(true)}
@@ -76,7 +83,7 @@ export default function TabLayout() {
           }}
         />
 
-        {/* 3. FORUM TAB (Newly Added) */}
+        {/* 4. FORUM */}
         <Tabs.Screen
           name="forum"
           options={{
@@ -86,7 +93,7 @@ export default function TabLayout() {
           }}
         />
 
-        {/* 4. PROFILE TAB (Moved to the end) */}
+        {/* 5. PROFILE */}
         <Tabs.Screen
           name="profile"
           options={{
@@ -108,7 +115,6 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: '#FFFFFF',
-    // Position absolute is key for the "floating" plus button
     height: Platform.OS === 'ios' ? 88 : 70,
     borderTopWidth: 0,
     elevation: 20,
@@ -122,7 +128,7 @@ const styles = StyleSheet.create({
     top: -20, 
     justifyContent: 'center',
     alignItems: 'center',
-    width: 70, // Added width to ensure touch target is solid
+    width: 70,
   },
   plusButton: {
     backgroundColor: '#2D60FF',
