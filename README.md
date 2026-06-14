@@ -20,7 +20,9 @@ People facing isolation struggle to find welcoming spaces that accommodate their
 ## Getting Started
 
 Install dependencies
+
 npm install
 
 Start the app
+
 npx expo start
